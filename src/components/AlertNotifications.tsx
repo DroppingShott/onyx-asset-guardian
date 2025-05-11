@@ -3,13 +3,21 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskAlert, fetchRiskAlerts } from "@/lib/api";
 import { useWallet } from "@/context/WalletContext";
-import { AlertTriangle, Bell, ChartBar } from "lucide-react";
+import { AlertTriangle, Bell, ChartBar, Filter } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AlertNotifications = () => {
   const { address, isConnected } = useWallet();
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
+  const [riskLevelFilter, setRiskLevelFilter] = useState<string>("all");
   
   // Use React Query for data fetching with automatic refetching
   const { data, isLoading, error } = useQuery({
@@ -81,12 +89,33 @@ const AlertNotifications = () => {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
+  // Filter alerts based on selected risk level
+  const filteredAlerts = riskLevelFilter === 'all' 
+    ? alerts 
+    : alerts.filter(alert => alert.level === riskLevelFilter);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xl font-bold">Risk Alerts</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          Latest 5 alerts across chains
+        <div className="flex items-center gap-2">
+          <Select 
+            value={riskLevelFilter} 
+            onValueChange={setRiskLevelFilter}
+          >
+            <SelectTrigger className="w-[130px]">
+              <div className="flex items-center">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter Risk" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              <SelectItem value="high">High Risk</SelectItem>
+              <SelectItem value="medium">Medium Risk</SelectItem>
+              <SelectItem value="low">Low Risk</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent>
@@ -94,14 +123,16 @@ const AlertNotifications = () => {
           <div className="flex justify-center py-8">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           </div>
-        ) : alerts.length === 0 ? (
+        ) : filteredAlerts.length === 0 ? (
           <div className="py-8 text-center">
             <Bell className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No active alerts at the moment</p>
+            <p className="text-sm text-muted-foreground">
+              {alerts.length === 0 ? 'No active alerts at the moment' : 'No alerts match your filter'}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {alerts.map((alert) => (
+            {filteredAlerts.map((alert) => (
               <div 
                 key={alert.id} 
                 className="flex items-start space-x-3 p-3 rounded-lg border border-muted bg-muted/30"
