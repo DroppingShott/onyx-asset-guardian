@@ -5,66 +5,46 @@ import { RiskAlert, fetchRiskAlerts } from "@/lib/api";
 import { useWallet } from "@/context/WalletContext";
 import { AlertTriangle, Bell, ChartBar } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { useQuery } from "@tanstack/react-query";
 
 const AlertNotifications = () => {
   const { address, isConnected } = useWallet();
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [pollingInterval, setPollingInterval] = useState<number | null>(null);
-
-  const loadAlerts = async () => {
-    if (isConnected && address) {
-      setLoading(true);
-      try {
-        const riskAlerts = await fetchRiskAlerts(address);
+  
+  // Use React Query for data fetching with automatic refetching
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['alerts', address],
+    queryFn: () => fetchRiskAlerts(address || ''),
+    enabled: isConnected && !!address,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    onSuccess: (newAlerts) => {
+      // Check for new alerts to display toast notifications
+      if (alerts.length > 0) {
+        const newNotifications = newAlerts.filter(
+          alert => !alerts.some(existingAlert => existingAlert.id === alert.id)
+        );
         
-        // Check for new alerts
-        if (alerts.length > 0) {
-          const newAlerts = riskAlerts.filter(
-            alert => !alerts.some(existingAlert => existingAlert.id === alert.id)
-          );
-          
-          // Show toast notifications for new alerts
-          newAlerts.forEach(alert => {
-            toast.warning(`${alert.assetSymbol} Alert: ${alert.message}`, {
-              icon: <AlertTriangle className="h-4 w-4" />,
-              description: `From: ${alert.source} (${alert.chain || 'Unknown Chain'})`,
-              action: {
-                label: "View",
-                onClick: () => window.open(alert.url, "_blank")
-              }
-            });
+        // Show toast notifications for new alerts
+        newNotifications.forEach(alert => {
+          toast.warning(`${alert.assetSymbol} Alert: ${alert.message}`, {
+            icon: <AlertTriangle className="h-4 w-4" />,
+            description: `From: ${alert.source} (${alert.chain || 'Unknown Chain'})`,
+            action: {
+              label: "View",
+              onClick: () => window.open(alert.url, "_blank")
+            }
           });
-        }
-        
-        // Always limit to 5 most recent alerts
-        setAlerts(riskAlerts.slice(0, 5));
-      } catch (error) {
-        console.error("Failed to load alerts:", error);
-      } finally {
-        setLoading(false);
+        });
       }
+      
+      // Always limit to 5 most recent alerts
+      setAlerts(newAlerts.slice(0, 5));
+    },
+    onError: (err) => {
+      console.error("Failed to load alerts:", err);
+      toast.error("Failed to fetch risk alerts");
     }
-  };
-
-  useEffect(() => {
-    loadAlerts();
-    
-    // Set up polling for real-time alerts
-    if (isConnected && !pollingInterval) {
-      const interval = window.setInterval(() => {
-        loadAlerts();
-      }, 30000); // Poll every 30 seconds
-      setPollingInterval(interval);
-    }
-    
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    };
-  }, [isConnected, address]);
+  });
 
   if (!isConnected) {
     return null;
@@ -102,7 +82,7 @@ const AlertNotifications = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {loading && alerts.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center py-8">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           </div>

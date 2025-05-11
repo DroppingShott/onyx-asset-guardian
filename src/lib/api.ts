@@ -1,4 +1,6 @@
+
 import { toast } from "@/components/ui/sonner";
+import axios from "axios";
 
 // Asset types
 export interface Asset {
@@ -43,6 +45,9 @@ export interface RiskAlert {
   chain?: string; // Added chain field to identify blockchain network
 }
 
+// API base URL - in production this would point to your deployed API
+const API_BASE_URL = "https://eth-risk-analysis-api.example.com";
+
 // Format large numbers in a readable way
 export function formatNumber(num: number, precision = 2): string {
   if (num >= 1000000000) {
@@ -63,24 +68,32 @@ export function formatAddress(address: string | null): string {
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 }
 
-// Fetch user assets using Sapphire API across multiple chains
+// Utility to get token logo by symbol
+const getTokenLogo = (symbol: string): string => {
+  const logoMap: Record<string, string> = {
+    BTC: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
+    ETH: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    SOL: "https://assets.coingecko.com/coins/images/4128/large/solana.png",
+    ROSE: "https://assets.coingecko.com/coins/images/13162/large/rose.png",
+    BNB: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  };
+
+  return logoMap[symbol] || "https://assets.coingecko.com/coins/images/1/large/bitcoin.png";
+};
+
+// Fetch user assets across multiple chains
 export async function fetchUserAssets(address: string): Promise<Asset[]> {
+  // For development, we'll use the mock data but structured to simulate the real API
   try {
-    // In a real implementation, this would be an API call to Sapphire
-    // For the sake of this implementation, we'll make a theoretical API call
-    const response = await fetch(`https://api.sapphire.example/v1/assets?address=${address}`);
+    // In a real implementation, this would be an API call to your deployed backend
+    // const response = await axios.get(`${API_BASE_URL}/api/assets/${address}`);
+    // return response.data;
     
-    if (!response.ok) {
-      throw new Error(`Error fetching assets: ${response.status}`);
-    }
-    
-    // In a real app, this would parse JSON from the API response
-    // For now, we'll simulate a network request with a timeout
+    // For now, simulate an API response with mock data
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Return assets from multiple chains including Ethereum, Bitcoin, and Oasis Sapphire
-        // Always include BTC and ETH even if the balance is 0
-        const assets = [
+        // Ensure BTC and ETH are always included even with zero balance
+        const assets: Asset[] = [
           {
             id: 'bitcoin',
             symbol: 'BTC',
@@ -153,19 +166,15 @@ export async function fetchUserAssets(address: string): Promise<Asset[]> {
   }
 }
 
-// Fetch sentiment analysis using ROFL agent
+// Fetch sentiment analysis from ROFL agent
 export async function fetchSentimentAnalysis(assetIds: string[]): Promise<Record<string, SentimentData>> {
   try {
     // In a real implementation, this would be an API call to your ROFL agent backend
-    // For the sake of this implementation, we'll make a theoretical API call
-    const queryParams = assetIds.map(id => `assets[]=${id}`).join('&');
-    const response = await fetch(`https://api.rofl-agent.example/v1/sentiment?${queryParams}`);
+    // const queryParams = assetIds.map(id => `assets[]=${id}`).join('&');
+    // const response = await axios.get(`${API_BASE_URL}/api/sentiment?${queryParams}`);
+    // return response.data;
     
-    if (!response.ok) {
-      throw new Error(`Error fetching sentiment: ${response.status}`);
-    }
-    
-    // Return real sentiment data keyed by asset ID
+    // For now, simulate an API response
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -186,6 +195,18 @@ export async function fetchSentimentAnalysis(assetIds: string[]): Promise<Record
             negative: 48,
             neutral: 10,
             overall: 'negative'
+          },
+          'rose': {
+            positive: 58,
+            negative: 22,
+            neutral: 20,
+            overall: 'positive'
+          },
+          'bnb': {
+            positive: 50,
+            negative: 30,
+            neutral: 20,
+            overall: 'positive'
           }
         });
       }, 800);
@@ -200,14 +221,11 @@ export async function fetchSentimentAnalysis(assetIds: string[]): Promise<Record
 // Fetch news sources that contribute to sentiment
 export async function fetchNewsSources(assetId: string): Promise<NewsSource[]> {
   try {
-    // In a real implementation, this would be an API call to fetch news sources
-    const response = await fetch(`https://api.rofl-agent.example/v1/news?assetId=${assetId}`);
+    // In a real implementation, this would be an API call
+    // const response = await axios.get(`${API_BASE_URL}/api/news/${assetId}`);
+    // return response.data;
     
-    if (!response.ok) {
-      throw new Error(`Error fetching news: ${response.status}`);
-    }
-    
-    // Return real news data
+    // Return mock news data
     return new Promise((resolve) => {
       setTimeout(() => {
         if (assetId === 'bitcoin') {
@@ -273,6 +291,27 @@ export async function fetchNewsSources(assetId: string): Promise<NewsSource[]> {
               snippet: 'A top 10 Solana DeFi protocol announces plans to migrate to Ethereum, citing stability concerns.'
             }
           ]);
+        } else if (assetId === 'rose') {
+          resolve([
+            {
+              id: 'news7',
+              title: 'Oasis Labs Partners with Major Financial Institution',
+              url: 'https://example.com/oasis-partnership',
+              source: 'BlockchainNews',
+              sentiment: 'positive',
+              date: '2025-05-10',
+              snippet: 'Oasis Labs announces strategic partnership with a top-10 global bank for privacy-preserving analytics.'
+            },
+            {
+              id: 'news8',
+              title: 'Oasis Network Testnet Performance Improves with Recent Update',
+              url: 'https://example.com/oasis-update',
+              source: 'CryptoTech',
+              sentiment: 'positive',
+              date: '2025-05-09',
+              snippet: 'Latest testnet update shows 40% improvement in transaction throughput and lower gas fees.'
+            }
+          ]);
         } else {
           resolve([]);
         }
@@ -289,11 +328,11 @@ export async function fetchNewsSources(assetId: string): Promise<NewsSource[]> {
 export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
   try {
     // In a real implementation, this would fetch alerts from your backend
-    const response = await fetch(`https://api.rofl-agent.example/v1/alerts?address=${address}`);
-    
-    if (!response.ok) {
-      throw new Error(`Error fetching alerts: ${response.status}`);
-    }
+    // const response = await axios.get(`${API_BASE_URL}/api/alerts/${address}`);
+    // return response.data.map((alert: any) => ({
+    //   ...alert,
+    //   timestamp: new Date(alert.timestamp)
+    // }));
     
     // Return the 5 most recent alerts from various chains
     return new Promise((resolve) => {
@@ -360,6 +399,51 @@ export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
   } catch (error) {
     console.error("Error fetching alerts:", error);
     toast.error("Failed to fetch risk alerts");
+    return [];
+  }
+}
+
+// Calculate risk score for a wallet based on its assets and transaction history
+export async function calculateWalletRiskScore(address: string): Promise<number> {
+  try {
+    // In a real implementation, this would call your risk analysis API
+    // const response = await axios.get(`${API_BASE_URL}/api/risk-score/${address}`);
+    // return response.data.riskScore;
+    
+    // For now, return a mock risk score between 1-100
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simulate a risk score calculation
+        const riskScore = Math.floor(Math.random() * 60) + 20; // Score between 20-80
+        resolve(riskScore);
+      }, 800);
+    });
+  } catch (error) {
+    console.error("Error calculating wallet risk score:", error);
+    toast.error("Failed to calculate risk score");
+    return 50; // Default medium risk
+  }
+}
+
+// Get chain-specific transaction data
+export async function getChainTransactions(address: string, chain: string): Promise<any[]> {
+  try {
+    // In a real implementation, this would query the specific chain's API
+    // const response = await axios.get(`${API_BASE_URL}/api/transactions/${chain}/${address}`);
+    // return response.data;
+    
+    // For now, return mock transaction data
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          // Mock transaction data would go here
+          // This would be chain-specific transaction data
+        ]);
+      }, 1000);
+    });
+  } catch (error) {
+    console.error(`Error fetching ${chain} transactions:`, error);
+    toast.error(`Failed to fetch ${chain} transaction data`);
     return [];
   }
 }
