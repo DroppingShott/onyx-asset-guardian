@@ -34,7 +34,8 @@ const AssetList = () => {
 
   const filteredAssets = assets.filter(asset => 
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    asset.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (asset.chain && asset.chain.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
@@ -56,7 +57,7 @@ const AssetList = () => {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search assets..."
+              placeholder="Search assets or chains..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -71,7 +72,8 @@ const AssetList = () => {
         ) : (
           <>
             <div className="grid grid-cols-12 gap-4 px-2 py-3 text-xs font-medium text-muted-foreground">
-              <div className="col-span-6">Asset</div>
+              <div className="col-span-5">Asset</div>
+              <div className="col-span-1">Chain</div>
               <div className="col-span-2 text-right">Amount</div>
               <div className="col-span-2 text-right">Price</div>
               <div className="col-span-2 text-right">Value</div>
@@ -88,7 +90,7 @@ const AssetList = () => {
                     key={asset.id} 
                     className="grid grid-cols-12 gap-4 rounded-md p-2 hover:bg-muted/50"
                   >
-                    <div className="col-span-6 flex items-center space-x-3">
+                    <div className="col-span-5 flex items-center space-x-3">
                       <div className="h-8 w-8 rounded-full overflow-hidden">
                         <img 
                           src={asset.image} 
@@ -100,6 +102,9 @@ const AssetList = () => {
                         <div className="font-medium">{asset.name}</div>
                         <div className="text-xs text-muted-foreground">{asset.symbol}</div>
                       </div>
+                    </div>
+                    <div className="col-span-1 flex items-center text-xs text-muted-foreground">
+                      {asset.chain}
                     </div>
                     <div className="col-span-2 flex items-center justify-end">
                       <span>{asset.amount}</span>

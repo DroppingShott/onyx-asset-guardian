@@ -28,7 +28,7 @@ const AlertNotifications = () => {
           newAlerts.forEach(alert => {
             toast.warning(`${alert.assetSymbol} Alert: ${alert.message}`, {
               icon: <AlertTriangle className="h-4 w-4" />,
-              description: `From: ${alert.source}`,
+              description: `From: ${alert.source} (${alert.chain || 'Unknown Chain'})`,
               action: {
                 label: "View",
                 onClick: () => window.open(alert.url, "_blank")
@@ -37,7 +37,8 @@ const AlertNotifications = () => {
           });
         }
         
-        setAlerts(riskAlerts);
+        // Always limit to 5 most recent alerts
+        setAlerts(riskAlerts.slice(0, 5));
       } catch (error) {
         console.error("Failed to load alerts:", error);
       } finally {
@@ -97,7 +98,7 @@ const AlertNotifications = () => {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xl font-bold">Risk Alerts</CardTitle>
         <div className="text-sm text-muted-foreground">
-          Real-time monitoring
+          Latest 5 alerts across chains
         </div>
       </CardHeader>
       <CardContent>
@@ -129,7 +130,7 @@ const AlertNotifications = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between">
                     <p className="text-sm font-medium">
-                      {alert.assetSymbol}: {alert.message}
+                      <span className="font-semibold">[{alert.chain || 'Unknown'}]</span> {alert.assetSymbol}: {alert.message}
                     </p>
                     <span className="text-xs text-muted-foreground ml-2">
                       {formatTime(alert.timestamp)}

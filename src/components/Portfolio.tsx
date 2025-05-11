@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Asset, fetchUserAssets, formatNumber } from "@/lib/api";
 import { useWallet } from "@/context/WalletContext";
-import { ChartLine } from "lucide-react";
+import { ChartLine, ChartBar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Portfolio = () => {

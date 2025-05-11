@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/sonner";
 
 // Asset types
@@ -12,6 +11,7 @@ export interface Asset {
   priceUsd: number;
   change24h: number;
   riskScore: number;
+  chain?: string; // Added chain field to identify blockchain network
 }
 
 export interface SentimentData {
@@ -40,6 +40,7 @@ export interface RiskAlert {
   source: string;
   timestamp: Date;
   url?: string;
+  chain?: string; // Added chain field to identify blockchain network
 }
 
 // Format large numbers in a readable way
@@ -62,7 +63,7 @@ export function formatAddress(address: string | null): string {
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 }
 
-// Fetch user assets using Sapphire API
+// Fetch user assets using Sapphire API across multiple chains
 export async function fetchUserAssets(address: string): Promise<Asset[]> {
   try {
     // In a real implementation, this would be an API call to Sapphire
@@ -77,8 +78,9 @@ export async function fetchUserAssets(address: string): Promise<Asset[]> {
     // For now, we'll simulate a network request with a timeout
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Return real blockchain data based on the connected address
-        resolve([
+        // Return assets from multiple chains including Ethereum, Bitcoin, and Oasis Sapphire
+        // Always include BTC and ETH even if the balance is 0
+        const assets = [
           {
             id: 'bitcoin',
             symbol: 'BTC',
@@ -88,7 +90,8 @@ export async function fetchUserAssets(address: string): Promise<Asset[]> {
             value: 16235.50,
             priceUsd: 32471.00,
             change24h: 2.3,
-            riskScore: 25
+            riskScore: 25,
+            chain: 'Bitcoin'
           },
           {
             id: 'ethereum',
@@ -99,7 +102,8 @@ export async function fetchUserAssets(address: string): Promise<Asset[]> {
             value: 5760.00,
             priceUsd: 1800.00,
             change24h: -1.2,
-            riskScore: 30
+            riskScore: 30,
+            chain: 'Ethereum'
           },
           {
             id: 'solana',
@@ -110,9 +114,36 @@ export async function fetchUserAssets(address: string): Promise<Asset[]> {
             value: 1250.00,
             priceUsd: 50.00,
             change24h: 5.8,
-            riskScore: 45
+            riskScore: 45,
+            chain: 'Solana'
+          },
+          {
+            id: 'rose',
+            symbol: 'ROSE',
+            name: 'Oasis Network',
+            image: 'https://assets.coingecko.com/coins/images/13162/large/rose.png',
+            amount: 1000.0,
+            value: 650.00,
+            priceUsd: 0.65,
+            change24h: 3.2,
+            riskScore: 40,
+            chain: 'Oasis Sapphire Testnet'
+          },
+          {
+            id: 'bnb',
+            symbol: 'BNB',
+            name: 'Binance Coin',
+            image: 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+            amount: 2.5,
+            value: 750.00,
+            priceUsd: 300.00,
+            change24h: 1.8,
+            riskScore: 35,
+            chain: 'BNB Chain'
           }
-        ]);
+        ];
+        
+        resolve(assets);
       }, 1000);
     });
   } catch (error) {
@@ -254,7 +285,7 @@ export async function fetchNewsSources(assetId: string): Promise<NewsSource[]> {
   }
 }
 
-// Fetch risk alerts
+// Fetch risk alerts from multiple chains
 export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
   try {
     // In a real implementation, this would fetch alerts from your backend
@@ -264,7 +295,7 @@ export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
       throw new Error(`Error fetching alerts: ${response.status}`);
     }
     
-    // Return real-time alerts
+    // Return the 5 most recent alerts from various chains
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve([
@@ -276,7 +307,8 @@ export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
             message: 'Network instability reported',
             source: 'BlockchainMonitor',
             timestamp: new Date(),
-            url: 'https://example.com/solana-outage'
+            url: 'https://example.com/solana-outage',
+            chain: 'Solana'
           },
           {
             id: 'alert2',
@@ -286,7 +318,41 @@ export async function fetchRiskAlerts(address: string): Promise<RiskAlert[]> {
             message: 'Potential regulatory concerns',
             source: 'Regulatory Watch',
             timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-            url: 'https://example.com/sec-ethereum'
+            url: 'https://example.com/sec-ethereum',
+            chain: 'Ethereum'
+          },
+          {
+            id: 'alert3',
+            assetId: 'rose',
+            assetSymbol: 'ROSE',
+            level: 'low',
+            message: 'Testnet performance improvements',
+            source: 'Oasis Labs',
+            timestamp: new Date(Date.now() - 7200000), // 2 hours ago
+            url: 'https://example.com/oasis-improvements',
+            chain: 'Oasis Sapphire Testnet'
+          },
+          {
+            id: 'alert4',
+            assetId: 'bitcoin',
+            assetSymbol: 'BTC',
+            level: 'medium',
+            message: 'Mining difficulty adjustment expected',
+            source: 'BitcoinAnalytics',
+            timestamp: new Date(Date.now() - 10800000), // 3 hours ago
+            url: 'https://example.com/btc-mining',
+            chain: 'Bitcoin'
+          },
+          {
+            id: 'alert5',
+            assetId: 'bnb',
+            assetSymbol: 'BNB',
+            level: 'high',
+            message: 'New regulatory compliance requirements',
+            source: 'BinanceNews',
+            timestamp: new Date(Date.now() - 14400000), // 4 hours ago
+            url: 'https://example.com/bnb-regulation',
+            chain: 'BNB Chain'
           }
         ]);
       }, 600);
