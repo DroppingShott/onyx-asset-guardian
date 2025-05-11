@@ -17,10 +17,14 @@ const AlertNotifications = () => {
     queryFn: () => fetchRiskAlerts(address || ''),
     enabled: isConnected && !!address,
     refetchInterval: 30000, // Refetch every 30 seconds
-    onSuccess: (newAlerts) => {
+  });
+
+  // Handle successful data fetching and notification logic in a useEffect
+  useEffect(() => {
+    if (data) {
       // Check for new alerts to display toast notifications
       if (alerts.length > 0) {
-        const newNotifications = newAlerts.filter(
+        const newNotifications = data.filter(
           alert => !alerts.some(existingAlert => existingAlert.id === alert.id)
         );
         
@@ -38,13 +42,17 @@ const AlertNotifications = () => {
       }
       
       // Always limit to 5 most recent alerts
-      setAlerts(newAlerts.slice(0, 5));
-    },
-    onError: (err) => {
-      console.error("Failed to load alerts:", err);
+      setAlerts(data.slice(0, 5));
+    }
+  }, [data, alerts]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      console.error("Failed to load alerts:", error);
       toast.error("Failed to fetch risk alerts");
     }
-  });
+  }, [error]);
 
   if (!isConnected) {
     return null;
